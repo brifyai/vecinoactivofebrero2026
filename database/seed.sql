@@ -8,7 +8,7 @@
 -- =====================================================
 
 INSERT INTO users (email, password_hash, name, phone, address, role, is_verified, is_active) VALUES
-('demo@vecino.cl', '$2a$10$YourHashedPasswordHere', 'Juan Demo', '+56 9 1234 5678', 'Calle Los Pinos 123, Casa 5', 'vecino', TRUE, TRUE),
+('demo@vecino.cl', '$2a$10$YourHashedPasswordHere', 'Camilo Alegria', '+56 9 1234 5678', 'Calle Los Pinos 123, Casa 5', 'vecino', TRUE, TRUE),
 ('maria.gonzalez@email.cl', '$2a$10$YourHashedPasswordHere', 'María González', '+56 9 2345 6789', 'Av. Principal 456, Depto 302', 'vecino', TRUE, TRUE),
 ('carlos.munoz@email.cl', '$2a$10$YourHashedPasswordHere', 'Carlos Muñoz', '+56 9 3456 7890', 'Calle Los Robles 789', 'moderador', TRUE, TRUE),
 ('ana.perez@email.cl', '$2a$10$YourHashedPasswordHere', 'Ana Pérez', '+56 9 4567 8901', 'Paseo del Bosque 321', 'vecino', TRUE, TRUE),

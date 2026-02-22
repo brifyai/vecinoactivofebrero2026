@@ -20,7 +20,7 @@ import { Settings } from './screens/Settings';
 const DEMO_USER = {
   email: 'demo@vecino.cl',
   password: 'demo123',
-  name: 'Vecino Demo',
+  name: 'Camilo Alegria',
 };
 
 interface User {
