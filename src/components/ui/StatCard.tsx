@@ -46,7 +46,7 @@ export function StatCard({ label, value, trend, trendUp, icon, color = 'green' }
             <span className={trendUp ? 'text-emerald-400' : 'text-rose-400'}>
               {trend}
             </span>
-            <span className="text-white/60 ml-1">vs last week</span>
+            <span className="text-white/60 ml-1">vs semana pasada</span>
           </div>
         )}
       </div>
