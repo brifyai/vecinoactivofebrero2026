@@ -358,8 +358,9 @@ export function MapScreen() {
   }, []);
 
   return (
-    <div className="p-4 lg:p-8 lg:ml-[400px] flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
-      <header className="mb-3 lg:mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 flex-shrink-0 pt-12 lg:pt-0">
+    <div className="p-4 lg:p-6 flex flex-col min-h-screen pt-16 lg:pt-6">
+      <div className="max-w-6xl mx-auto w-full flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
+      <header className="mb-3 lg:mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 flex-shrink-0">
         <div>
           <h1 className="text-xl lg:text-2xl font-bold text-white mb-1 flex items-center gap-2 lg:gap-3">
             Mapa de Unidades Vecinales <Map className="w-5 h-5 lg:w-6 lg:h-6 text-emerald-400" />
@@ -642,6 +643,7 @@ export function MapScreen() {
             </ul>
           </Card>
         </div>
+      </div>
       </div>
     </div>
   );

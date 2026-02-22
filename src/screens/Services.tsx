@@ -36,58 +36,61 @@ export function Services() {
   const handleContact = (businessId: number) => {
     const business = businesses.find(b => b.id === businessId);
     console.log('Contactando:', business?.name);
-    // TODO: Abrir modal de contacto o llamar directamente
     if (business) {
       alert(`Contactando a ${business.name}\nDirección: ${business.address}\nHorario: ${business.hours}`);
     }
   };
 
   return (
-    <div className="p-8 space-y-8 animate-fade-in lg:ml-[400px]">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">Servicios Locales <Store className="w-8 h-8 text-emerald-400" /></h1>
-        <p className="text-gray-400">Apoya el comercio de tu barrio.</p>
-      </header>
+    <div className="min-h-screen p-4 lg:p-6 animate-fade-in pt-16 lg:pt-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <header className="mb-4 lg:mb-8">
+          <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2 flex items-center gap-3">
+            Servicios Locales <Store className="w-6 h-6 lg:w-8 lg:h-8 text-emerald-400" />
+          </h1>
+          <p className="text-gray-400 text-sm lg:text-base">Apoya el comercio de tu barrio.</p>
+        </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {businesses.map((business) => (
-          <Card key={business.id} className="overflow-hidden p-0 group hover:shadow-2xl transition-all duration-300 border-white/10 hover:border-emerald-500/30">
-            <div className="h-48 overflow-hidden relative">
-              <img 
-                src={business.image} 
-                alt={business.name} 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-              />
-              <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1">
-                <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                <span className="text-white text-xs font-bold">{business.rating}</span>
-              </div>
-            </div>
-            
-            <div className="p-6 space-y-4">
-              <div>
-                <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">{business.category}</span>
-                <h3 className="text-xl font-bold text-white mt-1 group-hover:text-emerald-300 transition-colors">{business.name}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+          {businesses.map((business) => (
+            <Card key={business.id} className="overflow-hidden p-0 group hover:shadow-2xl transition-all duration-300 border-white/10 hover:border-emerald-500/30">
+              <div className="h-48 overflow-hidden relative">
+                <img 
+                  src={business.image} 
+                  alt={business.name} 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                />
+                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg flex items-center gap-1">
+                  <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                  <span className="text-white text-xs font-bold">{business.rating}</span>
+                </div>
               </div>
               
-              <div className="space-y-2 text-sm text-gray-400">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-emerald-500" />
-                  <span>{business.address}</span>
+              <div className="p-4 lg:p-6 space-y-4">
+                <div>
+                  <span className="text-xs font-medium text-emerald-400 uppercase tracking-wider">{business.category}</span>
+                  <h3 className="text-lg lg:text-xl font-bold text-white mt-1 group-hover:text-emerald-300 transition-colors">{business.name}</h3>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-emerald-500" />
-                  <span>{business.hours}</span>
+                
+                <div className="space-y-2 text-sm text-gray-400">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-emerald-500" />
+                    <span>{business.address}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-emerald-500" />
+                    <span>{business.hours}</span>
+                  </div>
                 </div>
-              </div>
 
-              <button onClick={() => handleContact(business.id)} className="w-full py-2 bg-white/5 hover:bg-emerald-500 hover:text-white text-emerald-400 rounded-xl font-medium transition-all flex items-center justify-center gap-2 mt-2">
-                <Phone className="w-4 h-4" />
-                Contactar
-              </button>
-            </div>
-          </Card>
-        ))}
+                <button onClick={() => handleContact(business.id)} className="w-full py-2 bg-white/5 hover:bg-emerald-500 hover:text-white text-emerald-400 rounded-xl font-medium transition-all flex items-center justify-center gap-2 mt-2">
+                  <Phone className="w-4 h-4" />
+                  Contactar
+                </button>
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );

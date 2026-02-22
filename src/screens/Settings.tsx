@@ -148,7 +148,8 @@ export function Settings({ user, onLogout }: SettingsProps) {
   ];
 
   return (
-    <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 animate-fade-in lg:ml-[400px] min-h-screen">
+    <div className="p-4 lg:p-6 animate-fade-in min-h-screen pt-16 lg:pt-6">
+      <div className="max-w-6xl mx-auto space-y-6">
       <header className="mb-6 lg:mb-8">
         <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2 flex items-center gap-3">
           Configuración <SettingsIcon className="w-6 h-6 lg:w-8 lg:h-8 text-emerald-400" />
@@ -508,6 +509,7 @@ export function Settings({ user, onLogout }: SettingsProps) {
             )}
           </Card>
         </div>
+      </div>
       </div>
     </div>
   );
