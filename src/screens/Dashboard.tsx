@@ -37,7 +37,7 @@ export function Dashboard() {
           <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2 flex items-center gap-3">
             Hola, Vecino <Hand className="w-6 h-6 lg:w-8 lg:h-8 text-emerald-400" />
           </h1>
-          <p className="text-gray-400 text-sm lg:text-base">Aquí está el resumen de tu comunidad hoy.</p>
+          <p className="text-white text-sm lg:text-base">Aquí está el resumen de tu comunidad hoy.</p>
         </header>
 
         {/* Stats Grid - Responsive */}
@@ -101,12 +101,12 @@ export function Dashboard() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-white font-medium text-sm lg:text-base truncate">{activity.user}</p>
-                        <p className="text-xs lg:text-sm text-gray-400 truncate">{activity.action}</p>
+                        <p className="text-xs lg:text-sm text-white truncate">{activity.action}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
-                      <span className="text-xs text-gray-500 hidden sm:inline">{activity.time}</span>
-                      <ArrowRight className="w-4 h-4 text-gray-600 group-hover:text-emerald-400 transition-colors" />
+                      <span className="text-xs text-white/60 hidden sm:inline">{activity.time}</span>
+                      <ArrowRight className="w-4 h-4 text-white/60 group-hover:text-emerald-400 transition-colors" />
                     </div>
                   </div>
                 ))}
@@ -124,13 +124,13 @@ export function Dashboard() {
               </div>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-300 text-sm">Nivel de Alerta</span>
+                  <span className="text-white text-sm">Nivel de Alerta</span>
                   <span className="px-2 lg:px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-medium border border-emerald-500/20">BAJO</span>
                 </div>
                 <div className="h-2 bg-black/40 rounded-full overflow-hidden">
                   <div className="h-full w-1/4 bg-emerald-500 rounded-full" />
                 </div>
-                <p className="text-xs text-gray-400 leading-relaxed">
+                <p className="text-xs text-white leading-relaxed">
                   El vecindario se encuentra tranquilo. Última ronda de seguridad realizada hace 30 minutos.
                 </p>
               </div>
@@ -142,10 +142,10 @@ export function Dashboard() {
                 <div onClick={handleEventClick} className="p-3 lg:p-4 bg-white/5 rounded-xl border border-white/5 hover:border-emerald-500/30 transition-all cursor-pointer group">
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-xs font-medium text-emerald-400">MAÑANA, 18:00</span>
-                    <MapPin className="w-4 h-4 text-gray-500 group-hover:text-emerald-400 transition-colors" />
+                    <MapPin className="w-4 h-4 text-white/60 group-hover:text-emerald-400 transition-colors" />
                   </div>
                   <h4 className="text-white font-medium mb-1 text-sm lg:text-base">Asamblea General</h4>
-                  <p className="text-xs lg:text-sm text-gray-400">Sede Social #3</p>
+                  <p className="text-xs lg:text-sm text-white">Sede Social #3</p>
                 </div>
               </div>
             </Card>

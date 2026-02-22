@@ -25,7 +25,7 @@ export function StatCard({ label, value, trend, trendUp, icon, color = 'green' }
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex justify-between items-start">
-        <span className="text-sm font-medium text-gray-400">{label}</span>
+        <span className="text-sm font-medium text-white">{label}</span>
         {icon && (
           <div className={`p-2 rounded-xl ${getColor()}`}>
             {icon}
@@ -46,7 +46,7 @@ export function StatCard({ label, value, trend, trendUp, icon, color = 'green' }
             <span className={trendUp ? 'text-emerald-400' : 'text-rose-400'}>
               {trend}
             </span>
-            <span className="text-gray-500 ml-1">vs last week</span>
+            <span className="text-white/60 ml-1">vs last week</span>
           </div>
         )}
       </div>
