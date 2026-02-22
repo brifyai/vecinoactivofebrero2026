@@ -194,9 +194,9 @@ export function Feed() {
   return (
     <div className="min-h-screen p-4 lg:p-6 animate-fade-in pt-16 lg:pt-6">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Contenido principal - Posts */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 lg:space-y-6 order-1">
             <header className="mb-4 lg:mb-8">
               <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2 flex items-center gap-3">
                 Noticias <MessageSquare className="w-6 h-6 lg:w-8 lg:h-8 text-emerald-400" />
@@ -289,9 +289,9 @@ export function Feed() {
           </div>
 
           {/* Chat Panel - Lado derecho */}
-          <div className="hidden lg:block">
-            <div className="sticky top-24 border border-white/10 rounded-2xl bg-black/20 backdrop-blur-sm overflow-hidden">
-              <div className="flex flex-col h-[calc(100vh-8rem)]">
+          <div className="lg:block order-2">
+            <div className="lg:sticky lg:top-24 border border-white/10 rounded-2xl bg-black/20 backdrop-blur-sm overflow-hidden">
+              <div className="flex flex-col lg:h-[calc(100vh-8rem)]">
                 {/* Chat Header */}
                 <div className="p-4 border-b border-white/10">
                   <div className="flex items-center justify-between mb-4">
