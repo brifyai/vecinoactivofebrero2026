@@ -1,0 +1,383 @@
+import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
+
+dotenv.config();
+
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Configuración de Supabase
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
+const PORT = process.env.PORT || 3001;
+
+// Middleware
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173'
+}));
+app.use(express.json());
+
+// Tipos
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  password_hash?: string;
+}
+
+interface ChatRoom {
+  id: string;
+  name: string;
+  avatar: string;
+  created_at: string;
+}
+
+interface ChatMessage {
+  id: string;
+  room_id: string;
+  user_id: string;
+  user_name: string;
+  user_avatar: string;
+  message: string;
+  created_at: string;
+}
+
+// Rutas de autenticación
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
+
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: 'Faltan datos requeridos' });
+    }
+
+    // Verificar si el usuario ya existe
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'El usuario ya existe' });
+    }
+
+    // Encriptar contraseña
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Crear usuario
+    const { data: user, error } = await supabase
+      .from('users')
+      .insert({
+        email,
+        name,
+        password_hash: passwordHash
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Generar token JWT
+    const token = jwt.sign(
+      { id: user.id, email: user.email, name: user.name },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token,
+      user: { id: user.id, email: user.email, name: user.name }
+    });
+  } catch (error: any) {
+    console.error('Error en registro:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Faltan credenciales' });
+    }
+
+    // Buscar usuario
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (error || !user) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    // Verificar contraseña
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    // Generar token JWT
+    const token = jwt.sign(
+      { id: user.id, email: user.email, name: user.name },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token,
+      user: { id: user.id, email: user.email, name: user.name }
+    });
+  } catch (error: any) {
+    console.error('Error en login:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Middleware para verificar token
+const authenticateToken = (req: any, res: any, next: any) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token requerido' });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+    if (err) {
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// Rutas de salas de chat
+app.get('/api/chat/rooms', authenticateToken, async (req, res) => {
+  try {
+    const { data: rooms, error } = await supabase
+      .from('chat_rooms')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+
+    res.json(rooms || []);
+  } catch (error: any) {
+    console.error('Error al obtener salas:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/chat/rooms', authenticateToken, async (req, res) => {
+  try {
+    const { name, avatar } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'El nombre de la sala es requerido' });
+    }
+
+    const { data: room, error } = await supabase
+      .from('chat_rooms')
+      .insert({
+        name,
+        avatar: avatar || '💬'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json(room);
+  } catch (error: any) {
+    console.error('Error al crear sala:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Rutas de mensajes
+app.get('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { limit = 50 } = req.query;
+
+    const { data: messages, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('room_id', roomId)
+      .order('created_at', { ascending: true })
+      .limit(Number(limit));
+
+    if (error) throw error;
+
+    res.json(messages || []);
+  } catch (error: any) {
+    console.error('Error al obtener mensajes:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const { message } = req.body;
+    const user = req.user;
+
+    if (!message) {
+      return res.status(400).json({ error: 'El mensaje no puede estar vacío' });
+    }
+
+    const { data: newMessage, error } = await supabase
+      .from('chat_messages')
+      .insert({
+        room_id: roomId,
+        user_id: user.id,
+        user_name: user.name,
+        user_avatar: '👤',
+        message
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Emitir mensaje a través de Socket.io
+    io.to(roomId).emit('new_message', newMessage);
+
+    res.json(newMessage);
+  } catch (error: any) {
+    console.error('Error al enviar mensaje:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// WebSockets para tiempo real
+interface ConnectedUser {
+  userId: string;
+  socketId: string;
+}
+
+const connectedUsers = new Map<string, ConnectedUser>();
+
+io.on('connection', (socket) => {
+  console.log('Usuario conectado:', socket.id);
+
+  socket.on('join_room', (roomId: string) => {
+    socket.join(roomId);
+    console.log(`Socket ${socket.id} se unió a la sala ${roomId}`);
+  });
+
+  socket.on('leave_room', (roomId: string) => {
+    socket.leave(roomId);
+    console.log(`Socket ${socket.id} salió de la sala ${roomId}`);
+  });
+
+  socket.on('send_message', async (data: { roomId: string; message: string; token: string }) => {
+    try {
+      // Verificar token
+      const decoded = jwt.verify(data.token, JWT_SECRET) as any;
+
+      const { data: newMessage, error } = await supabase
+        .from('chat_messages')
+        .insert({
+          room_id: data.roomId,
+          user_id: decoded.id,
+          user_name: decoded.name,
+          user_avatar: '👤',
+          message: data.message
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      io.to(data.roomId).emit('new_message', newMessage);
+    } catch (error) {
+      console.error('Error al enviar mensaje por socket:', error);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Usuario desconectado:', socket.id);
+  });
+});
+
+// Inicializar tablas de Supabase si no existen
+async function initializeDatabase() {
+  try {
+    // Crear tabla de usuarios si no existe
+    const { error: usersError } = await supabase.from('users').select('id').limit(1);
+    if (usersError && usersError.message.includes('does not exist')) {
+      console.log('Creando tabla users...');
+      await supabase.rpc('create_users_table', {});
+    }
+
+    // Crear tabla de salas de chat
+    const { error: roomsError } = await supabase.from('chat_rooms').select('id').limit(1);
+    if (roomsError && roomsError.message.includes('does not exist')) {
+      console.log('Creando tabla chat_rooms...');
+      await supabase.rpc('create_chat_rooms_table', {});
+    }
+
+    // Crear tabla de mensajes
+    const { error: messagesError } = await supabase.from('chat_messages').select('id').limit(1);
+    if (messagesError && messagesError.message.includes('does not exist')) {
+      console.log('Creando tabla chat_messages...');
+      await supabase.rpc('create_chat_messages_table', {});
+    }
+
+    console.log('Base de datos inicializada');
+  } catch (error) {
+    console.log('Error al inicializar base de datos:', error);
+  }
+}
+
+// Insertar salas de chat por defecto
+async function seedChatRooms() {
+  try {
+    const { data: existingRooms } = await supabase.from('chat_rooms').select('id');
+    
+    if (!existingRooms || existingRooms.length === 0) {
+      console.log('Insertando salas de chat por defecto...');
+      
+      await supabase.from('chat_rooms').insert([
+        { name: 'Junta de Vecinos', avatar: '👥' },
+        { name: 'Seguridad UV4', avatar: '🛡️' },
+        { name: 'Grupo Jardinería', avatar: '🌱' },
+        { name: 'Mercado Comunitario', avatar: '🛒' }
+      ]);
+      
+      console.log('Salas de chat creadas');
+    }
+  } catch (error) {
+    console.log('Error al crear salas por defecto:', error);
+  }
+}
+
+// Iniciar servidor
+httpServer.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
+  initializeDatabase();
+  seedChatRooms();
+});
+
+export { app, io };

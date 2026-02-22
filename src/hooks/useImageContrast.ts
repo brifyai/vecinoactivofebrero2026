@@ -42,8 +42,8 @@ export function useImageContrast(imageUrl: string, options?: UseImageContrastOpt
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Usar umbral personalizado para mobile si no se especifica
-  const threshold = options?.luminanceThreshold ?? (isMobile ? 0.4 : 0.65);
+  // Usar umbral consistente para móvil y desktop
+  const threshold = options?.luminanceThreshold ?? 0.65;
 
   const analyzeImage = useCallback(async (url: string) => {
     setIsLoading(true);

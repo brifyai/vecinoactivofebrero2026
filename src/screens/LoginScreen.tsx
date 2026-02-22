@@ -3,12 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Users, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
 import { BackgroundProvider } from '../components/BackgroundProvider';
+import { api } from '../lib/api';
 
-interface LoginScreenProps {
-  onLogin: (email: string, password: string) => Promise<boolean>;
-}
-
-export function LoginScreen({ onLogin }: LoginScreenProps) {
+export function LoginScreen() {
   const navigate = useNavigate();
 
   // Scroll al inicio al cargar la página
@@ -38,12 +35,13 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     setLoading(true);
     
     try {
-      const success = await onLogin(email, password);
-      if (!success) {
-        setError('Credenciales incorrectas. Intenta de nuevo.');
-      }
-    } catch (err) {
-      setError('Error al iniciar sesión. Intenta de nuevo.');
+      const result = await api.login(email, password);
+      // Guardar usuario en localStorage
+      localStorage.setItem('vecino-activo-user', JSON.stringify(result.user));
+      // Navegar al dashboard
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Credenciales incorrectas. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }

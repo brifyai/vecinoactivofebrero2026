@@ -3,12 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Mail, Lock, User, Phone, MapPin, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 import { BackgroundProvider } from '../components/BackgroundProvider';
+import { api } from '../lib/api';
 
-interface RegisterScreenProps {
-  onRegister?: (name: string, email: string, password: string, phone: string, address: string) => Promise<boolean>;
-}
-
-export function RegisterScreen({ onRegister }: RegisterScreenProps) {
+export function RegisterScreen() {
   const navigate = useNavigate();
 
   // Scroll al inicio al cargar la página
@@ -54,23 +51,13 @@ export function RegisterScreen({ onRegister }: RegisterScreenProps) {
     setIsLoading(true);
 
     try {
-      if (onRegister) {
-        const success = await onRegister(
-          formData.name,
-          formData.email,
-          formData.password,
-          formData.phone,
-          formData.address
-        );
-        if (!success) {
-          setError('No se pudo completar el registro');
-        }
-      } else {
-        // Simular registro exitoso
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        navigate('/login');
-      }
-    } catch {
+      await api.register(
+        formData.email,
+        formData.password,
+        formData.name
+      );
+      navigate('/login');
+    } catch (err) {
       setError('Ocurrió un error. Intenta nuevamente.');
     } finally {
       setIsLoading(false);
