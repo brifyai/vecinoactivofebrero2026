@@ -7,12 +7,18 @@ interface ContrastResult {
   overlayColor: string;
 }
 
+interface UseImageContrastOptions {
+  /** Umbral de luminancia para determinar si la imagen es oscura (0-1). Por defecto 0.5 */
+  luminanceThreshold?: number;
+}
+
 /**
  * Analiza el contraste de una imagen usando la fórmula WCAG de luminancia
  * @param imageUrl - URL de la imagen a analizar
+ * @param options - Opciones adicionales como el umbral de luminancia
  * @returns Información sobre el contraste de la imagen
  */
-export function useImageContrast(imageUrl: string) {
+export function useImageContrast(imageUrl: string, options?: UseImageContrastOptions) {
   const [contrast, setContrast] = useState<ContrastResult>({
     isDark: true,
     luminance: 0,
@@ -20,6 +26,24 @@ export function useImageContrast(imageUrl: string) {
     overlayColor: 'rgba(0, 0, 0, 0.5)'
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Estado para detectar cambio de tamaño de pantalla
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  // Efecto para detectar cambios en el tamaño de la pantalla
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Usar umbral personalizado para mobile si no se especifica
+  const threshold = options?.luminanceThreshold ?? (isMobile ? 0.4 : 0.5);
 
   const analyzeImage = useCallback(async (url: string) => {
     setIsLoading(true);
@@ -74,7 +98,7 @@ export function useImageContrast(imageUrl: string) {
       }
 
       const avgLuminance = pixelCount > 0 ? totalLuminance / pixelCount : 0.5;
-      const isDark = avgLuminance < 0.5;
+      const isDark = avgLuminance < threshold;
 
       // Colores basados en el análisis
       const textColor = isDark ? '#e2e8f0' : '#1e293b';
@@ -101,13 +125,13 @@ export function useImageContrast(imageUrl: string) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [threshold]);
 
   useEffect(() => {
     if (imageUrl) {
       analyzeImage(imageUrl);
     }
-  }, [imageUrl, analyzeImage]);
+  }, [imageUrl, analyzeImage, threshold]);
 
   return { contrast, isLoading };
 }
