@@ -21,10 +21,5 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# GeoJSON files (too large for GitHub)
-# public/unidades_vecinales_simple.geojson
-# geo/unidades_vecinales_simple.geojson
-*.geojson
-
 # Cache
 .cache/
