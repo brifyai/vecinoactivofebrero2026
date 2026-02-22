@@ -43,7 +43,7 @@ export function useImageContrast(imageUrl: string, options?: UseImageContrastOpt
   }, []);
 
   // Usar umbral personalizado para mobile si no se especifica
-  const threshold = options?.luminanceThreshold ?? (isMobile ? 0.4 : 0.5);
+  const threshold = options?.luminanceThreshold ?? (isMobile ? 0.4 : 0.65);
 
   const analyzeImage = useCallback(async (url: string) => {
     setIsLoading(true);
@@ -101,7 +101,7 @@ export function useImageContrast(imageUrl: string, options?: UseImageContrastOpt
       const isDark = avgLuminance < threshold;
 
       // Colores basados en el análisis
-      const textColor = isDark ? '#e2e8f0' : '#1e293b';
+      const textColor = isDark ? '#ffffff' : '#1e293b';
       const overlayColor = isDark 
         ? `rgba(0, 0, 0, ${Math.max(0.3, 0.5 - avgLuminance * 0.3)})` 
         : `rgba(255, 255, 255, ${Math.max(0.3, 0.5 - (1 - avgLuminance) * 0.3)})`;
