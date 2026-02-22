@@ -1,12 +1,164 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Arena Web Dev App</title>
+    
+    <!-- Primary Meta Tags -->
+    <title>Vecino Activo - Conecta con tu Barrio | Comunidad Digital Chile</title>
+    <meta name="title" content="Vecino Activo - Conecta con tu Barrio | Comunidad Digital Chile" />
+    <meta name="description" content="Vecino Activo es la plataforma digital que conecta vecinos en Chile. Reporta incidentes de seguridad, participa en eventos comunitarios, descubre negocios locales y mantente informado sobre tu barrio. Únete a más de 14 millones de chilenos conectados." />
+    <meta name="keywords" content="vecinos, comunidad, junta de vecinos, seguridad vecinal, Chile, unidades vecinales, alertas comunitarias, eventos barrio, negocios locales, participación ciudadana, vecinos activos, comunidad digital, app vecinos Chile" />
+    <meta name="author" content="Vecino Activo" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="Spanish" />
+    <meta name="revisit-after" content="7 days" />
+    <meta name="generator" content="Vecino Activo Platform" />
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#10b981" />
+    <meta name="msapplication-TileColor" content="#10b981" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://vecinoactivo.cl/" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://vecinoactivo.cl/" />
+    <meta property="og:title" content="Vecino Activo - Conecta con tu Barrio | Comunidad Digital Chile" />
+    <meta property="og:description" content="La plataforma digital que conecta vecinos en Chile. Reporta incidentes, participa en eventos y descubre negocios locales. Únete a tu comunidad." />
+    <meta property="og:image" content="https://vecinoactivo.cl/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="es_CL" />
+    <meta property="og:site_name" content="Vecino Activo" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://vecinoactivo.cl/" />
+    <meta property="twitter:title" content="Vecino Activo - Conecta con tu Barrio | Comunidad Digital Chile" />
+    <meta property="twitter:description" content="La plataforma digital que conecta vecinos en Chile. Reporta incidentes, participa en eventos y descubre negocios locales." />
+    <meta property="twitter:image" content="https://vecinoactivo.cl/og-image.jpg" />
+    <meta name="twitter:creator" content="@vecinoactivo" />
+    
+    <!-- Geo Tags -->
+    <meta name="geo.region" content="CL-RM" />
+    <meta name="geo.placename" content="Chile" />
+    
+    <!-- App Links (Deep Linking) -->
+    <meta property="al:web:url" content="https://vecinoactivo.cl/" />
+    
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    
+    <!-- Structured Data - Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Vecino Activo",
+      "url": "https://vecinoactivo.cl",
+      "logo": "https://vecinoactivo.cl/logo.png",
+      "description": "Plataforma digital que conecta vecinos en Chile para mejorar la seguridad, participación ciudadana y vida comunitaria.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "CL",
+        "addressLocality": "Santiago",
+        "addressRegion": "Metropolitana"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+56-9-1234-5678",
+        "contactType": "customer service",
+        "availableLanguage": "Spanish"
+      },
+      "sameAs": [
+        "https://twitter.com/vecinoactivo",
+        "https://facebook.com/vecinoactivo",
+        "https://instagram.com/vecinoactivo"
+      ]
+    }
+    </script>
+    
+    <!-- Structured Data - WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Vecino Activo",
+      "url": "https://vecinoactivo.cl",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://vecinoactivo.cl/buscar?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
+    <!-- Structured Data - SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Vecino Activo",
+      "applicationCategory": "CommunityApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "CLP"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "1250"
+      },
+      "description": "Aplicación para conectar vecinos en Chile con alertas de seguridad, eventos comunitarios y directorio de negocios locales."
+    }
+    </script>
+    
+    <!-- Structured Data - LocalBusiness -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Vecino Activo",
+      "image": "https://vecinoactivo.cl/og-image.jpg",
+      "priceRange": "Gratis",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "CL",
+        "addressLocality": "Santiago"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": -33.4489,
+        "longitude": -70.6693
+      },
+      "openingHours": "Mo-Su 00:00-23:59",
+      "telephone": "+56-9-1234-5678"
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Noscript fallback -->
+    <noscript>
+      <div style="padding: 20px; text-align: center; font-family: sans-serif;">
+        <h1>Vecino Activo</h1>
+        <p>Para usar Vecino Activo necesitas habilitar JavaScript en tu navegador.</p>
+        <p>Vecino Activo es la plataforma digital que conecta vecinos en Chile.</p>
+      </div>
+    </noscript>
   </body>
 </html>

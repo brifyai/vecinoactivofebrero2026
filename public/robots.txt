@@ -1,0 +1,41 @@
+# Robots.txt for Vecino Activo
+# https://vecinoactivo.cl
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://vecinoactivo.cl/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1
+
+# Block sensitive paths
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /configuraciones
+Disallow: /*.json$
+
+# Allow search engines to index public content
+Allow: /
+Allow: /eventos
+Allow: /servicios
+Allow: /seguridad
+Allow: /mapa
+Allow: /terminos
+Allow: /privacidad
+Allow: /contacto
+
+# Google specific
+User-agent: Googlebot
+Allow: /
+
+# Bing specific
+User-agent: Bingbot
+Allow: /
+
+# DuckDuckGo
+User-agent: DuckDuckBot
+Allow: /
