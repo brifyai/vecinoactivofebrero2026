@@ -134,7 +134,7 @@ function AppContent() {
         element={
           isAuthenticated ? (
             <BackgroundProvider>
-              <div className="min-h-screen text-slate-200 selection:bg-emerald-500/30">
+              <div className="min-h-screen text-slate-200 selection:bg-emerald-500/30 overflow-x-hidden">
                 <Sidebar onNavigate={handleNavigate} activeView={currentView} onLogout={handleLogout} />
                 <main className="transition-all duration-300 lg:ml-[276px] lg:mr-[20px] px-4 sm:px-6 lg:px-8">
                   <div className="max-w-7xl mx-auto">
