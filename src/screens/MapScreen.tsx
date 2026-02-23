@@ -517,19 +517,19 @@ export function MapScreen() {
               <h3 className="text-lg font-bold text-white mb-3">📊 Estadísticas Generales</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Total Unidades:</span>
+                  <span className="text-white">Total Unidades:</span>
                   <span className="text-white font-bold text-lg">{stats.totalFeatures.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Población Total:</span>
+                  <span className="text-white">Población Total:</span>
                   <span className="text-emerald-400 font-bold">{stats.totalPoblacion.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Total Hogares:</span>
+                  <span className="text-white">Total Hogares:</span>
                   <span className="text-blue-400 font-medium">{stats.totalHogares.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Visibles ahora:</span>
+                  <span className="text-white">Visibles ahora:</span>
                   <span className="text-yellow-400 font-medium">{filteredFeatures.length.toLocaleString()}</span>
                 </div>
               </div>
