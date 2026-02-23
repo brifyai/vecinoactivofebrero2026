@@ -365,7 +365,7 @@ export function MapScreen() {
           <h1 className="text-xl lg:text-2xl font-bold text-white mb-1 flex items-center gap-2 lg:gap-3">
             Mapa de Unidades Vecinales <Map className="w-5 h-5 lg:w-6 lg:h-6 text-emerald-400" />
           </h1>
-          <p className="text-gray-400 text-xs lg:text-sm">Explora las {stats?.totalFeatures.toLocaleString() || ''} unidades vecinales de Chile.</p>
+          <p className="text-gray-400 text-xs lg:text-sm">Explora las {stats?.totalFeatures.toLocaleString('es-CL') || ''} unidades vecinales de Chile.</p>
         </div>
         
         <div className="flex items-center gap-2 lg:gap-3 w-full sm:w-auto">
