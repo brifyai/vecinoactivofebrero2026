@@ -38,6 +38,8 @@ export function LoginScreen() {
       const result = await api.login(email, password);
       // Guardar usuario en localStorage
       localStorage.setItem('vecino-activo-user', JSON.stringify(result.user));
+      // Emitir evento de login exitoso
+      window.dispatchEvent(new Event('login-success'));
       // Navegar al dashboard
       navigate('/dashboard');
     } catch (err: any) {

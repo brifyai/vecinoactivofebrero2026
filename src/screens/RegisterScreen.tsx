@@ -51,12 +51,17 @@ export function RegisterScreen() {
     setIsLoading(true);
 
     try {
-      await api.register(
+      const result = await api.register(
         formData.email,
         formData.password,
         formData.name
       );
-      navigate('/login');
+      // Guardar usuario en localStorage
+      localStorage.setItem('vecino-activo-user', JSON.stringify(result.user));
+      // Emitir evento de login exitoso
+      window.dispatchEvent(new Event('login-success'));
+      // Navegar al dashboard
+      navigate('/dashboard');
     } catch (err) {
       setError('Ocurrió un error. Intenta nuevamente.');
     } finally {

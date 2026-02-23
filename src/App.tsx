@@ -33,6 +33,40 @@ function AppContent() {
     return savedView || 'dashboard';
   });
 
+  // Escuchar cambios en localStorage para autenticación
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'vecino-token') {
+        const token = e.newValue;
+        setIsAuthenticated(!!token);
+        if (!token) {
+          setUser(null);
+          navigate('/');
+        }
+      }
+      if (e.key === 'vecino-activo-user') {
+        const savedUser = e.newValue;
+        setUser(savedUser ? JSON.parse(savedUser) : null);
+      }
+    };
+
+    // También escuchar evento personalizado para login
+    const handleLogin = () => {
+      const token = localStorage.getItem('vecino-token');
+      const savedUser = localStorage.getItem('vecino-activo-user');
+      setIsAuthenticated(!!token);
+      setUser(savedUser ? JSON.parse(savedUser) : null);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('login-success', handleLogin);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('login-success', handleLogin);
+    };
+  }, [navigate]);
+
   // Función de logout
   const handleLogout = () => {
     api.logout();
