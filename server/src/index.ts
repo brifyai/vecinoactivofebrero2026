@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request } from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -9,6 +9,15 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();
+
+// Extender el tipo Request para incluir user
+interface AuthRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+    name: string;
+  };
+}
 
 const app = express();
 const httpServer = createServer(app);
@@ -266,6 +275,277 @@ app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res)
     res.json(newMessage);
   } catch (error: any) {
     console.error('Error al enviar mensaje:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Rutas de servicios
+app.get('/api/services', async (req, res) => {
+  try {
+    const { category } = req.query;
+    
+    let query = supabase
+      .from('services')
+      .select('*')
+      .order('rating', { ascending: false });
+    
+    if (category) {
+      query = query.eq('category', category);
+    }
+    
+    const { data: services, error } = await query;
+
+    if (error) throw error;
+
+    res.json(services || []);
+  } catch (error: any) {
+    console.error('Error al obtener servicios:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/services/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { data: service, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+
+    res.json(service);
+  } catch (error: any) {
+    console.error('Error al obtener servicio:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/services', authenticateToken, async (req, res) => {
+  try {
+    const { name, category, description, phone, email, address, image_url } = req.body;
+    const user = req.user;
+
+    if (!name || !category) {
+      return res.status(400).json({ error: 'Nombre y categoría son requeridos' });
+    }
+
+    const { data: service, error } = await supabase
+      .from('services')
+      .insert({
+        name,
+        category,
+        description,
+        phone,
+        email,
+        address,
+        image_url,
+        is_verified: false
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json(service);
+  } catch (error: any) {
+    console.error('Error al crear servicio:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Rutas de eventos
+app.get('/api/events', async (req, res) => {
+  try {
+    const { category } = req.query;
+    
+    let query = supabase
+      .from('events')
+      .select('*')
+      .eq('is_active', true)
+      .order('date', { ascending: true });
+    
+    if (category) {
+      query = query.eq('category', category);
+    }
+    
+    const { data: events, error } = await query;
+
+    if (error) throw error;
+
+    res.json(events || []);
+  } catch (error: any) {
+    console.error('Error al obtener eventos:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/events/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { data: event, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+
+    res.json(event);
+  } catch (error: any) {
+    console.error('Error al obtener evento:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/events/:id/attendees', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const { data: attendees, error } = await supabase
+      .from('event_attendees')
+      .select('*')
+      .eq('event_id', id);
+
+    if (error) throw error;
+
+    res.json(attendees || []);
+  } catch (error: any) {
+    console.error('Error al obtener asistentes:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/events', authenticateToken, async (req, res) => {
+  try {
+    const { title, description, date, location, category, max_attendees, image_url } = req.body;
+    const user = req.user;
+
+    if (!title || !date || !category) {
+      return res.status(400).json({ error: 'Título, fecha y categoría son requeridos' });
+    }
+
+    const { data: event, error } = await supabase
+      .from('events')
+      .insert({
+        title,
+        description,
+        date,
+        location,
+        category,
+        organizer_id: user.id,
+        organizer_name: user.name,
+        max_attendees,
+        current_attendees: 0,
+        image_url,
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    res.json(event);
+  } catch (error: any) {
+    console.error('Error al crear evento:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/events/:id/attend', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.user;
+
+    // Verificar si el evento existe y tiene cupos
+    const { data: event, error: eventError } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (eventError || !event) {
+      return res.status(404).json({ error: 'Evento no encontrado' });
+    }
+
+    if (event.max_attendees && event.current_attendees >= event.max_attendees) {
+      return res.status(400).json({ error: 'El evento está lleno' });
+    }
+
+    // Agregar asistente
+    const { error: attendeeError } = await supabase
+      .from('event_attendees')
+      .insert({
+        event_id: id,
+        user_id: user.id,
+        user_name: user.name,
+        user_email: user.email
+      });
+
+    if (attendeeError) {
+      if (attendeeError.message.includes('duplicate')) {
+        return res.status(400).json({ error: 'Ya estás registrado en este evento' });
+      }
+      throw attendeeError;
+    }
+
+    // Incrementar contador de asistentes
+    await supabase
+      .from('events')
+      .update({ current_attendees: event.current_attendees + 1 })
+      .eq('id', id);
+
+    res.json({ message: 'Te has registrado en el evento' });
+  } catch (error: any) {
+    console.error('Error al registrarse en evento:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/events/:id/attend', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.user;
+
+    // Verificar si el asistente existe
+    const { data: attendee, error: attendeeError } = await supabase
+      .from('event_attendees')
+      .select('*')
+      .eq('event_id', id)
+      .eq('user_id', user.id)
+      .single();
+
+    if (attendeeError || !attendee) {
+      return res.status(404).json({ error: 'No estás registrado en este evento' });
+    }
+
+    // Eliminar asistente
+    await supabase
+      .from('event_attendees')
+      .delete()
+      .eq('event_id', id)
+      .eq('user_id', user.id);
+
+    // Decrementar contador de asistentes
+    const { data: event } = await supabase
+      .from('events')
+      .select('current_attendees')
+      .eq('id', id)
+      .single();
+
+    if (event && event.current_attendees > 0) {
+      await supabase
+        .from('events')
+        .update({ current_attendees: event.current_attendees - 1 })
+        .eq('id', id);
+    }
+
+    res.json({ message: 'Te has retirado del evento' });
+  } catch (error: any) {
+    console.error('Error al retirarse de evento:', error);
     res.status(500).json({ error: error.message });
   }
 });
