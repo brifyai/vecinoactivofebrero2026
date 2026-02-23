@@ -480,8 +480,9 @@ export function MapScreen() {
             <span className="text-gray-600">Visibles: </span>
             <span className="font-medium text-gray-800">{filteredFeatures.length.toLocaleString()}</span>
             {currentZoom < 8 && !searchTerm && (
-              <div className="mt-1 text-amber-600 text-xs">
-                🔍 Haz zoom in para ver las unidades
+              <div className="mt-1 text-amber-600 text-xs flex items-center gap-1">
+                <ZoomIn className="w-3 h-3" />
+                Haz zoom in para ver las unidades
               </div>
             )}
           </div>
@@ -514,7 +515,10 @@ export function MapScreen() {
           {/* Estadísticas */}
           {stats && (
             <Card variant="solid" className="bg-white/5 border border-white/10">
-              <h3 className="text-lg font-bold text-white mb-3">📊 Estadísticas Generales</h3>
+              <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-emerald-400" />
+                Estadísticas Generales
+              </h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-white">Total Unidades:</span>                  <span className="text-white font-bold text-lg">{stats.totalFeatures.toLocaleString('es-CL')}</span>
@@ -617,7 +621,10 @@ export function MapScreen() {
           
           {/* Instrucciones */}
           <Card variant="solid" className="bg-white/5 border border-white/10">
-            <h3 className="text-lg font-bold text-white mb-3">💡 Cómo usar</h3>
+            <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+              <ZoomIn className="w-5 h-5 text-emerald-400" />
+              Cómo usar
+            </h3>
             <ul className="text-sm text-gray-400 space-y-2">
               <li className="flex items-start gap-2">
                 <span className="text-emerald-400">•</span>
