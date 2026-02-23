@@ -21,9 +21,15 @@ interface AuthRequest extends Request {
 
 const app = express();
 const httpServer = createServer(app);
+
+// Configurar orígenes CORS permitidos
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : ['http://localhost:5173', 'http://localhost:4001', 'https://vecinoactivo.cl', 'https://www.vecinoactivo.cl'];
+
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: allowedOrigins,
     methods: ['GET', 'POST']
   }
 });
@@ -36,9 +42,20 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Middleware CORS con múltiples orígenes
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173'
+  origin: (origin, callback) => {
+    // Permitir solicitudes sin origin (como apps móviles o herramientas de testing)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('Origen no permitido por CORS:', origin);
+      callback(new Error('Origen no permitido por CORS'));
+    }
+  },
+  credentials: true
 }));
 app.use(express.json());
 
