@@ -178,7 +178,7 @@ export function LoginScreen() {
             <div className="mt-6 p-4 bg-white/5 rounded-xl border border-white/10">
               <p className="text-xs text-gray-400 text-center mb-2">Credenciales de prueba:</p>
               <p className="text-xs text-gray-300 text-center">
-                <span className="text-emerald-400">Email:</span> demo@vecino.cl
+                <span className="text-emerald-400">Email:</span> demo@vecinoactivo.cl
               </p>
               <p className="text-xs text-gray-300 text-center">
                 <span className="text-emerald-400">Contraseña:</span> demo123
