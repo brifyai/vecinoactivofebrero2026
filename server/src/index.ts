@@ -1,4 +1,4 @@
-import express, { Request } from 'express';
+import express, { Request, Response } from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
@@ -204,7 +204,7 @@ const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   
-  handler: (req, res) => {
+  handler: (req: Request, res: Response) => {
     res.status(429).json({
       error: 'Demasiados intentos. Por favor espera 1 minuto.',
       code: 'RATE_LIMIT_EXCEEDED',
