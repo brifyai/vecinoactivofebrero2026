@@ -19,7 +19,7 @@ RUN npm run build
 # ============================================
 WORKDIR /app/server
 COPY server/package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY server/. .
 RUN npm run build 2>/dev/null || echo "No build script, using src directly"
