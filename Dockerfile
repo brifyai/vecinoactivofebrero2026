@@ -30,7 +30,7 @@ COPY supervisord.conf /etc/supervisor.d/supervisord.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Exponer puertos
-EXPOSE 80 3002
+EXPOSE 80 3008
 
 # Iniciar supervisor (que maneja nginx y el backend)
 CMD ["supervisord", "-c", "/etc/supervisor.d/supervisord.conf"]
