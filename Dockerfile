@@ -28,6 +28,10 @@ WORKDIR /app
 RUN mkdir -p /usr/share/nginx/html
 RUN cp -r dist/* /usr/share/nginx/html/
 
+# Copiar script de inicio del backend
+COPY start-backend.sh /app/start-backend.sh
+RUN chmod +x /app/start-backend.sh
+
 # Configurar supervisor para ejecutar ambos procesos
 RUN mkdir -p /etc/supervisor.d
 COPY supervisord.conf /etc/supervisor.d/supervisord.conf
