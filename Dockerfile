@@ -7,7 +7,8 @@ RUN apk add --no-cache nginx supervisor
 
 # ========== FRONTEND ==========
 COPY package*.json ./
-RUN npm ci --only=production
+# Instalar TODAS las dependencias (incluyendo devDependencies para build)
+RUN npm ci
 
 COPY . .
 RUN npm run build
