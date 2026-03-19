@@ -32,6 +32,10 @@ RUN cp -r dist/* /usr/share/nginx/html/
 COPY start-backend.sh /app/start-backend.sh
 RUN chmod +x /app/start-backend.sh
 
+# Crear directorios necesarios para nginx y logs
+RUN mkdir -p /var/log/nginx /var/log/supervisor /run/nginx
+RUN touch /var/log/nginx/error.log /var/log/nginx/access.log
+
 # Configurar supervisor para ejecutar ambos procesos
 RUN mkdir -p /etc/supervisor.d
 COPY supervisord.conf /etc/supervisor.d/supervisord.conf
