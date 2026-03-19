@@ -6,31 +6,99 @@ import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
-
+import rateLimit from 'express-rate-limit';
 dotenv.config();
+
+
+// Validación de variables de entorno requeridas
+const requiredEnvVars = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+  console.error('❌ Error: Variables de entorno faltantes:');
+  missingEnvVars.forEach(varName => console.error(`   - ${varName}`));
+  console.error('\nPor favor configura el archivo .env.production');
+  process.exit(1);
+}
+
+// Validar JWT_SECRET
+const JWT_SECRET = process.env.JWT_SECRET!;
+
+// Lista de valores placeholder que no deben usarse en producción
+const INVALID_JWT_SECRETS = [
+  'your-super-secret-jwt-token-with-at-least-32-characters-long',
+  'REEMPLAZAR_CON_UN_SECRET_SEGURO_DE_64_CARACTERES_MINIMO',
+  'REEMPLAZAR_CON_UN_SECRET_SEGURO_DE_128_CARACTERES_HEX',
+  'REPLACE_WITH_A_SECURE_128_HEX_CHAR_SECRET',
+  'your_jwt_secret_here_change_in_production',
+  'your_jwt_secret_here'
+];
+
+// Validación 1: No usar placeholders
+if (INVALID_JWT_SECRETS.includes(JWT_SECRET)) {
+  console.error('❌ Error: JWT_SECRET es un valor placeholder. Debes generar una clave segura.');
+  console.error('   Genera una clave segura con:');
+  console.error('   node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
+  console.error('   Esto genera 128 caracteres hexadecimales (64 bytes de entropía)');
+  process.exit(1);
+}
+
+// Validación 2: Longitud mínima de seguridad (64 caracteres = 256 bits)
+if (JWT_SECRET.length < 64) {
+  console.error('❌ Error: JWT_SECRET debe tener al menos 64 caracteres para seguridad adecuada');
+  console.error(`   Longitud actual: ${JWT_SECRET.length} caracteres`);
+  console.error('   Recomendado: 128 caracteres hexadecimales (generados con crypto.randomBytes(64))');
+  process.exit(1);
+}
+
+// Validación 3: Entropía mínima (debe ser hexadecimal o base64)
+const isHex = /^[a-f0-9]+$/i.test(JWT_SECRET);
+const isBase64 = /^[A-Za-z0-9+/=]+$/.test(JWT_SECRET);
+if (!isHex && !isBase64) {
+  console.warn('⚠️  Advertencia: JWT_SECRET no parece ser hexadecimal ni base64.');
+  console.warn('   Se recomienda usar: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
+}
+
+console.log('✅ Variables de entorno validadas correctamente');
 
 // Extender el tipo Request para incluir user
 interface AuthRequest extends Request {
   user?: {
-    id: string;
+    id: number;
     email: string;
     name: string;
   };
 }
 
 const app = express();
+
+// Trust proxy: Express está detrás de nginx
+// nginx envía X-Forwarded-For, Express debe confiar en ese header
+app.set('trust proxy', 1);
+
 const httpServer = createServer(app);
 
 // Configurar orígenes CORS permitidos
+// En producción, CORS_ORIGIN debe contener solo los dominios explícitos permitidos
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
   : ['http://localhost:5173', 'http://localhost:4001', 'https://vecinoactivo.cl', 'https://www.vecinoactivo.cl'];
 
+// Validar que no se use wildcard en producción
+if (allowedOrigins.includes('*')) {
+  console.error('❌ Error: CORS_ORIGIN no debe contener wildcard "*" en producción');
+  console.error('   Orígenes permitidos:', allowedOrigins);
+  console.error('   Configura explícitamente los dominios permitidos en CORS_ORIGIN');
+  process.exit(1);
+}
+
+console.log('✅ CORS configurado para orígenes:', allowedOrigins);
+
 const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins,
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
@@ -39,59 +107,256 @@ const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
 const PORT = process.env.PORT || 3001;
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // Middleware CORS con múltiples orígenes
+// Configuración que permite:
+// - Requests sin Origin (curl, Postman, health checks)
+// - Solo orígenes explícitos del navegador
+// - Credentials (cookies, auth headers)
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir solicitudes sin origin (como apps móviles o herramientas de testing)
-    if (!origin) return callback(null, true);
+    // Permitir solicitudes sin origin (curl, Postman, health checks, apps móviles)
+    if (!origin) {
+      return callback(null, true);
+    }
     
+    // Verificar si el origen está en la lista permitida
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log('Origen no permitido por CORS:', origin);
-      callback(new Error('Origen no permitido por CORS'));
+      console.log('⛔ CORS bloqueado - Origen no permitido:', origin);
+      // No llamamos al callback con error, simplemente no permitimos el origen
+      // Esto evita el error 500 y deja que el navegador maneje el CORS
+      callback(null, false);
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+// Middleware para loggear requests bloqueados por CORS (opcional, para debugging)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && !allowedOrigins.includes(origin)) {
+    console.log('⛔ Request de origen no permitido:', origin, '- Path:', req.path);
+  }
+  next();
+});
 app.use(express.json());
+
+// ============================================
+// RATE LIMITING - Segunda capa de protección
+// ============================================
+// NOTA: Nginx tiene rate limiting en la primera capa (5r/m)
+// Express tiene límite más alto (10r/m) para evitar falsos positivos
+// Si nginx falla, Express aún protege contra abuso
+
+const authRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 10, // 10 requests por minuto (doble que nginx)
+  standardHeaders: true,
+  legacyHeaders: false,
+  
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Demasiados intentos. Por favor espera 1 minuto.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      retry_after: 60
+    });
+  }
+  // No necesita keyGenerator: trust proxy está configurado,
+  // express-rate-limit usa req.ip automáticamente
+});
+
+console.log('✅ Rate limiting configurado: 10 requests/minuto para auth');
+
+// ============================================
+// VALIDACIÓN DE INPUTS DE AUTENTICACIÓN
+// ============================================
+
+// Validar formato de email
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Validar fortaleza de contraseña
+// Requisitos: mínimo 8 caracteres, al menos 1 mayúscula, 1 minúscula, 1 número
+const isStrongPassword = (password: string): boolean => {
+  if (password.length < 8) return false;
+  if (!/[A-Z]/.test(password)) return false; // Al menos 1 mayúscula
+  if (!/[a-z]/.test(password)) return false; // Al menos 1 minúscula
+  if (!/[0-9]/.test(password)) return false; // Al menos 1 número
+  return true;
+};
+
+// Sanitizar y validar inputs de registro
+const validateRegisterInput = (body: unknown): { valid: boolean; error?: string; data?: { email: string; password: string; name: string } } => {
+  // Type guard para verificar que body es un objeto
+  if (typeof body !== 'object' || body === null) {
+    return { valid: false, error: 'El cuerpo de la petición debe ser un objeto JSON' };
+  }
+
+  const b = body as Record<string, unknown>;
+  const { email, password, name } = b;
+
+  // Validar tipos
+  if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== 'string') {
+    return { valid: false, error: 'Todos los campos deben ser texto' };
+  }
+
+  // RECHAZAR longitudes excesivas (no truncar silenciosamente)
+  if (email.length > 254) {
+    return { valid: false, error: 'El email es demasiado largo (máximo 254 caracteres)' };
+  }
+  if (name.length > 100) {
+    return { valid: false, error: 'El nombre es demasiado largo (máximo 100 caracteres)' };
+  }
+  if (password.length > 128) {
+    return { valid: false, error: 'La contraseña es demasiado larga (máximo 128 caracteres)' };
+  }
+
+  // Sanitizar: trim y lowercase
+  const sanitizedEmail = email.trim().toLowerCase();
+  const sanitizedName = name.trim();
+  // No hacer trim a password (los espacios iniciales/finales pueden ser intencionales)
+
+  // Validar email vacío
+  if (!sanitizedEmail) {
+    return { valid: false, error: 'El email es requerido' };
+  }
+
+  // Validar formato de email
+  if (!isValidEmail(sanitizedEmail)) {
+    return { valid: false, error: 'El formato del email no es válido' };
+  }
+
+  // Validar nombre vacío
+  if (!sanitizedName) {
+    return { valid: false, error: 'El nombre es requerido' };
+  }
+
+  // Validar longitud mínima del nombre
+  if (sanitizedName.length < 2) {
+    return { valid: false, error: 'El nombre debe tener al menos 2 caracteres' };
+  }
+
+  // Validar contraseña vacía
+  if (!password) {
+    return { valid: false, error: 'La contraseña es requerida' };
+  }
+
+  // Validar fortaleza de contraseña
+  if (!isStrongPassword(password)) {
+    return { 
+      valid: false, 
+      error: 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número' 
+    };
+  }
+
+  return { 
+    valid: true, 
+    data: { 
+      email: sanitizedEmail, 
+      password, 
+      name: sanitizedName 
+    } 
+  };
+};
+
+// Sanitizar y validar inputs de login
+const validateLoginInput = (body: unknown): { valid: boolean; error?: string; data?: { email: string; password: string } } => {
+  // Type guard para verificar que body es un objeto
+  if (typeof body !== 'object' || body === null) {
+    return { valid: false, error: 'El cuerpo de la petición debe ser un objeto JSON' };
+  }
+
+  const b = body as Record<string, unknown>;
+  const { email, password } = b;
+
+  // Validar tipos
+  if (typeof email !== 'string' || typeof password !== 'string') {
+    return { valid: false, error: 'Email y contraseña deben ser texto' };
+  }
+
+  // RECHAZAR longitudes excesivas (no truncar silenciosamente)
+  if (email.length > 254) {
+    return { valid: false, error: 'El email es demasiado largo (máximo 254 caracteres)' };
+  }
+  if (password.length > 128) {
+    return { valid: false, error: 'La contraseña es demasiado larga (máximo 128 caracteres)' };
+  }
+
+  // Sanitizar: trim y lowercase
+  const sanitizedEmail = email.trim().toLowerCase();
+  // No hacer trim a password
+
+  // Validar email vacío
+  if (!sanitizedEmail) {
+    return { valid: false, error: 'El email es requerido' };
+  }
+
+  // Validar formato de email (nuevo en login)
+  if (!isValidEmail(sanitizedEmail)) {
+    return { valid: false, error: 'El formato del email no es válido' };
+  }
+
+  // Validar contraseña vacía
+  if (!password) {
+    return { valid: false, error: 'La contraseña es requerida' };
+  }
+
+  return { 
+    valid: true, 
+    data: { 
+      email: sanitizedEmail, 
+      password 
+    } 
+  };
+};
 
 // Tipos
 interface User {
-  id: string;
+  id: number;
   email: string;
   name: string;
   password_hash?: string;
 }
 
 interface ChatRoom {
-  id: string;
+  id: number;
   name: string;
   avatar: string;
   created_at: string;
 }
 
 interface ChatMessage {
-  id: string;
-  room_id: string;
-  user_id: string;
+  id: number;
+  room_id: number;
+  user_id: number;
   user_name: string;
   user_avatar: string;
   message: string;
   created_at: string;
 }
 
-// Rutas de autenticación
-app.post('/api/auth/register', async (req, res) => {
+// Rutas de autenticación con rate limiting
+app.post('/api/auth/register', authRateLimiter, async (req, res) => {
   try {
-    const { email, password, name } = req.body;
-
-    if (!email || !password || !name) {
-      return res.status(400).json({ error: 'Faltan datos requeridos' });
+    // Validar y sanitizar inputs
+    const validation = validateRegisterInput(req.body);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
     }
+
+    const { email, password, name } = validation.data!;
 
     // Verificar si el usuario ya existe
     const { data: existingUser } = await supabase
@@ -137,13 +402,15 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authRateLimiter, async (req, res) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Faltan credenciales' });
+    // Validar y sanitizar inputs
+    const validation = validateLoginInput(req.body);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.error });
     }
+
+    const { email, password } = validation.data!;
 
     // Buscar usuario
     const { data: user, error } = await supabase
@@ -180,7 +447,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Middleware para verificar token
-const authenticateToken = (req: any, res: any, next: any) => {
+const authenticateToken = (req: AuthRequest, res: any, next: any) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -188,11 +455,27 @@ const authenticateToken = (req: any, res: any, next: any) => {
     return res.status(401).json({ error: 'Token requerido' });
   }
 
-  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+  jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
     if (err) {
       return res.status(403).json({ error: 'Token inválido' });
     }
-    req.user = user;
+
+    // Validar que decoded.id sea un número entero válido y positivo
+    const userId = Number(decoded.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(401).json({ error: 'Token inválido' });
+    }
+
+    // Validar que email y name existan y sean strings
+    if (!decoded.email || typeof decoded.email !== 'string' || !decoded.name || typeof decoded.name !== 'string') {
+      return res.status(401).json({ error: 'Token inválido' });
+    }
+
+    req.user = {
+      id: userId,
+      email: decoded.email,
+      name: decoded.name
+    };
     next();
   });
 };
@@ -241,7 +524,7 @@ app.post('/api/chat/rooms', authenticateToken, async (req, res) => {
 });
 
 // Rutas de mensajes
-app.get('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res) => {
+app.get('/api/chat/rooms/:roomId/messages', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { roomId } = req.params;
     const { limit = 50 } = req.query;
@@ -262,7 +545,7 @@ app.get('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res) 
   }
 });
 
-app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res) => {
+app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { roomId } = req.params;
     const { message } = req.body;
@@ -276,8 +559,8 @@ app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res)
       .from('chat_messages')
       .insert({
         room_id: roomId,
-        user_id: user.id,
-        user_name: user.name,
+        user_id: user!.id,
+        user_name: user!.name,
         user_avatar: '👤',
         message
       })
@@ -340,7 +623,7 @@ app.get('/api/services/:id', async (req, res) => {
   }
 });
 
-app.post('/api/services', authenticateToken, async (req, res) => {
+app.post('/api/services', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { name, category, description, phone, email, address, image_url } = req.body;
     const user = req.user;
@@ -436,7 +719,7 @@ app.get('/api/events/:id/attendees', async (req, res) => {
   }
 });
 
-app.post('/api/events', authenticateToken, async (req, res) => {
+app.post('/api/events', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { title, description, date, location, category, max_attendees, image_url } = req.body;
     const user = req.user;
@@ -453,8 +736,8 @@ app.post('/api/events', authenticateToken, async (req, res) => {
         date,
         location,
         category,
-        organizer_id: user.id,
-        organizer_name: user.name,
+        organizer_id: user!.id,
+        organizer_name: user!.name,
         max_attendees,
         current_attendees: 0,
         image_url,
@@ -472,7 +755,7 @@ app.post('/api/events', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/events/:id/attend', authenticateToken, async (req, res) => {
+app.post('/api/events/:id/attend', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const user = req.user;
@@ -497,9 +780,9 @@ app.post('/api/events/:id/attend', authenticateToken, async (req, res) => {
       .from('event_attendees')
       .insert({
         event_id: id,
-        user_id: user.id,
-        user_name: user.name,
-        user_email: user.email
+        user_id: user!.id,
+        user_name: user!.name,
+        user_email: user!.email
       });
 
     if (attendeeError) {
@@ -522,7 +805,7 @@ app.post('/api/events/:id/attend', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/events/:id/attend', authenticateToken, async (req, res) => {
+app.delete('/api/events/:id/attend', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const user = req.user;
@@ -532,7 +815,7 @@ app.delete('/api/events/:id/attend', authenticateToken, async (req, res) => {
       .from('event_attendees')
       .select('*')
       .eq('event_id', id)
-      .eq('user_id', user.id)
+      .eq('user_id', user!.id)
       .single();
 
     if (attendeeError || !attendee) {
@@ -544,7 +827,7 @@ app.delete('/api/events/:id/attend', authenticateToken, async (req, res) => {
       .from('event_attendees')
       .delete()
       .eq('event_id', id)
-      .eq('user_id', user.id);
+      .eq('user_id', user!.id);
 
     // Decrementar contador de asistentes
     const { data: event } = await supabase
@@ -569,7 +852,7 @@ app.delete('/api/events/:id/attend', authenticateToken, async (req, res) => {
 
 // WebSockets para tiempo real
 interface ConnectedUser {
-  userId: string;
+  userId: number;
   socketId: string;
 }
 

@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # Frontend + Nginx
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      # ============================================
+      # CONFIGURACIÓN SSL
+      # ============================================
+      # OPCIÓN A: Certificados autofirmados (desarrollo)
+      # - ./ssl:/etc/nginx/ssl:ro
+      #
+      # OPCIÓN B: Let's Encrypt (producción)
+      # Descomentar cuando tengas certificados reales:
+      - ./certbot-data/conf:/etc/letsencrypt:ro
+      - ./certbot-data/www:/var/www/certbot:ro
+      #
+      # OPCIÓN C: Certificados comprados (producción)
+      # - ./ssl-custom:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+    networks:
+      - vecino-network
+    restart: unless-stopped
+    # Health check para nginx
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "3008:3008"
+    environment:
+      - NODE_ENV=production
+      - PORT=3008
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+    env_file:
+      - ./server/.env.production
+    networks:
+      - vecino-network
+    restart: unless-stopped
+    # Health check definido en Dockerfile
+
+  # ============================================
+  # CERTBOT - Let's Encrypt (solo producción)
+  # ============================================
+  # Descomentar este servicio cuando estés listo para usar Let's Encrypt
+  #
+  # certbot:
+  #   image: certbot/certbot:latest
+  #   container_name: certbot
+  #   volumes:
+  #     - ./certbot-data/conf:/etc/letsencrypt
+  #     - ./certbot-data/www:/var/www/certbot
+  #   # Modo "certonly" obtiene certificados sin instalar en nginx
+  #   # El comando real se ejecuta manualmente la primera vez
+  #   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+  #   networks:
+  #     - vecino-network
+
+networks:
+  vecino-network:
+    driver: bridge
+
+# ============================================
+# VOLUMES PERSISTENTES
+# ============================================
+# Los certificados de Let's Encrypt se almacenan en:
+# ./certbot-data/conf/ - Certificados y configuración
+# ./certbot-data/www/  - Archivos de validación ACME
+#
+# Para backup de certificados:
+# tar -czf certbot-backup-$(date +%Y%m%d).tar.gz certbot-data/

@@ -7,15 +7,17 @@
 -- USUARIOS DE PRUEBA
 -- =====================================================
 
+-- Contraseña para todos los usuarios demo: demo123
+-- Hash bcrypt generado con: bcrypt.hashSync('demo123', 10)
 INSERT INTO users (email, password_hash, name, phone, address, role, is_verified, is_active) VALUES
-('demo@vecino.cl', '$2a$10$YourHashedPasswordHere', 'Camilo Alegria', '+56 9 1234 5678', 'Calle Los Pinos 123, Casa 5', 'vecino', TRUE, TRUE),
-('maria.gonzalez@email.cl', '$2a$10$YourHashedPasswordHere', 'María González', '+56 9 2345 6789', 'Av. Principal 456, Depto 302', 'vecino', TRUE, TRUE),
-('carlos.munoz@email.cl', '$2a$10$YourHashedPasswordHere', 'Carlos Muñoz', '+56 9 3456 7890', 'Calle Los Robles 789', 'moderador', TRUE, TRUE),
-('ana.perez@email.cl', '$2a$10$YourHashedPasswordHere', 'Ana Pérez', '+56 9 4567 8901', 'Paseo del Bosque 321', 'vecino', TRUE, TRUE),
-('roberto.diaz@email.cl', '$2a$10$YourHashedPasswordHere', 'Roberto Díaz', '+56 9 5678 9012', 'Calle Los Alerces 654', 'vecino', TRUE, TRUE),
-('camila.soto@email.cl', '$2a$10$YourHashedPasswordHere', 'Camila Soto', '+56 9 6789 0123', 'Av. Los Libertadores 987', 'vecino', TRUE, TRUE),
-('admin@vecinoactivo.cl', '$2a$10$YourHashedPasswordHere', 'Administrador Sistema', '+56 9 0000 0000', 'Oficina Central', 'admin', TRUE, TRUE),
-('junta.uv4@email.cl', '$2a$10$YourHashedPasswordHere', 'Junta Vecinal UV4', '+56 9 1111 2222', 'Sede Social UV4', 'junta_vecinal', TRUE, TRUE);
+('demo@vecino.cl', '$2a$10$N9qo8uLOickgx2ZMRZoMy.MqrqhmM6JGKpS4G3R1G2JH8YpfB0Bqy', 'Camilo Alegria', '+56 9 1234 5678', 'Calle Los Pinos 123, Casa 5', 'vecino', TRUE, TRUE),
+('maria.gonzalez@email.cl', '$2a$10$N9qo8uLOickgx2ZMRZoMy.MqrqhmM6JGKpS4G3R1G2JH8YpfB0Bqy', 'María González', '+56 9 2345 6789', 'Av. Principal 456, Depto 302', 'vecino', TRUE, TRUE),
+('carlos.munoz@email.cl', '$2a$10$N9qo8uLOickgx2ZMRZoMy.MqrqhmM6JGKpS4G3R1G2JH8YpfB0Bqy', 'Carlos Muñoz', '+56 9 3456 7890', 'Calle Los Robles 789', 'moderador', TRUE, TRUE),
+('ana.perez@email.cl', '$2a$10$N9qo8uLOickgx2ZMRZoMy.MqrqhmM6JGKpS4G3R1G2JH8YpfB0Bqy', 'Ana Pérez', '+56 9 4567 8901', 'Paseo del Bosque 321', 'vecino', TRUE, TRUE),
+('roberto.diaz@email.cl', '$2a$10$N9qo8uLOickgx2ZMRZoMy.MqrqhmM6JGKpS4G3R1G2JH8YpfB0Bqy', 'Roberto Díaz', '+56 9 5678 9012', 'Calle Los Alerces 654', 'vecino', TRUE, TRUE),
+('camila.soto@email.cl', '$2a$10$N9qo8uLOickgx2ZMRZoMy.MqrqhmM6JGKpS4G3R1G2JH8YpfB0Bqy', 'Camila Soto', '+56 9 6789 0123', 'Av. Los Libertadores 987', 'vecino', TRUE, TRUE),
+('admin@vecinoactivo.cl', '$2a$10$N9qo8uLOickgx2ZMRZoMy.MqrqhmM6JGKpS4G3R1G2JH8YpfB0Bqy', 'Administrador Sistema', '+56 9 0000 0000', 'Oficina Central', 'admin', TRUE, TRUE),
+('junta.uv4@email.cl', '$2a$10$N9qo8uLOickgx2ZMRZoMy.MqrqhmM6JGKpS4G3R1G2JH8YpfB0Bqy', 'Junta Vecinal UV4', '+56 9 1111 2222', 'Sede Social UV4', 'junta_vecinal', TRUE, TRUE);
 
 -- =====================================================
 -- UNIDADES VECINALES DE EJEMPLO

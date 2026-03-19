@@ -1,16 +1,16 @@
 import { io, Socket } from 'socket.io-client';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3008';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3008';
 
 export interface User {
-  id: string;
+  id: number;
   email: string;
   name: string;
 }
 
 export interface ChatRoom {
-  id: string;
+  id: number;
   name: string;
   avatar: string;
   description?: string;
@@ -20,9 +20,9 @@ export interface ChatRoom {
 }
 
 export interface ChatMessage {
-  id: string;
-  room_id: string;
-  user_id: string;
+  id: number;
+  room_id: number;
+  user_id: number;
   user_name: string;
   user_avatar: string;
   message: string;
@@ -58,17 +58,33 @@ class ApiClient {
       ...options.headers,
     };
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers,
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Error desconocido' }));
-      throw new Error(error.error || 'Error en la solicitud');
+      if (!response.ok) {
+        let errorMessage = 'Error en la solicitud';
+        try {
+          const error = await response.json();
+          errorMessage = error.error || error.message || `Error ${response.status}: ${response.statusText}`;
+        } catch {
+          errorMessage = `Error ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      return response.json();
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('No se pudo conectar al servidor. Verifica que el servidor esté corriendo en el puerto 3008.');
+      }
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Error desconocido en la solicitud');
     }
-
-    return response.json();
   }
 
   // Autenticación
@@ -107,12 +123,12 @@ class ApiClient {
   }
 
   // Mensajes
-  async getMessages(roomId: string, limit?: number): Promise<ChatMessage[]> {
+  async getMessages(roomId: number, limit?: number): Promise<ChatMessage[]> {
     const params = limit ? `?limit=${limit}` : '';
     return this.request<ChatMessage[]>(`/api/chat/rooms/${roomId}/messages${params}`);
   }
 
-  async sendMessage(roomId: string, message: string): Promise<ChatMessage> {
+  async sendMessage(roomId: number, message: string): Promise<ChatMessage> {
     return this.request<ChatMessage>(`/api/chat/rooms/${roomId}/messages`, {
       method: 'POST',
       body: JSON.stringify({ message }),
