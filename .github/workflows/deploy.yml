@@ -1,0 +1,52 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'server/**'
+      - 'nginx.conf'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: |
+        cd server
+        npm ci
+
+    - name: Create env file
+      run: |
+        cd server
+        cat > .env << 'EOF'
+        SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+        SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        JWT_SECRET=${{ secrets.JWT_SECRET }}
+        PORT=3002
+        CORS_ORIGIN=https://vecinoactivo.cl,https://www.vecinoactivo.cl
+        EOF
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          cd /var/www/vecinoactivo
+          git pull origin main
+          cd server
+          npm install
+          pm2 restart vecino-backend || pm2 start src/index.ts --name vecino-backend
+          sudo nginx -s reload
