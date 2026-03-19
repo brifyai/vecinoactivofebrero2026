@@ -29,8 +29,11 @@ RUN npm run build
 # ============================================
 FROM node:20-alpine
 
-# Install Nginx and curl (for health checks)
-RUN apk add --no-cache nginx curl
+# Install Nginx, curl (for health checks), and gawk (for backoff calculations)
+RUN apk add --no-cache nginx curl gawk
+
+# Create log directory for backend
+RUN mkdir -p /var/log && chmod 755 /var/log
 
 WORKDIR /app
 
