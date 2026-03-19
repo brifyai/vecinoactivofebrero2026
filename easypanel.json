@@ -1,0 +1,33 @@
+{
+  "name": "vecinoactivov2",
+  "version": "1.0.0",
+  "services": [
+    {
+      "type": "app",
+      "name": "vecinoactivov2",
+      "source": {
+        "type": "git",
+        "repo": "https://github.com/brifyai/vecinoactivofebrero2026.git",
+        "branch": "main"
+      },
+      "build": {
+        "dockerfile": "Dockerfile"
+      },
+      "deploy": {
+        "port": 80,
+        "healthCheck": {
+          "path": "/api/health",
+          "port": 80,
+          "interval": 30,
+          "timeout": 10,
+          "retries": 3,
+          "startPeriod": 60
+        }
+      },
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": "3008"
+      }
+    }
+  ]
+}
