@@ -40,7 +40,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy backend
 COPY --from=builder /app/server /app/server
 
-# Copy nginx config (modificado para localhost)
+# Remove any existing nginx configs and copy new one
+RUN rm -f /etc/nginx/conf.d/*.conf /etc/nginx/nginx.conf
 COPY nginx-easypanel.conf /etc/nginx/conf.d/default.conf
 
 # Copy supervisor config
