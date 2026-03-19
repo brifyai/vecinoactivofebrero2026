@@ -25,7 +25,7 @@ const httpServer = createServer(app);
 // Configurar orígenes CORS permitidos
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-  : ['http://localhost:5173', 'http://localhost:3212', 'http://localhost:4001', 'https://vecinoactivo.cl', 'https://www.vecinoactivo.cl'];
+  : ['http://localhost:5173', 'http://localhost:4001', 'https://vecinoactivo.cl', 'https://www.vecinoactivo.cl'];
 
 const io = new Server(httpServer, {
   cors: {
@@ -40,14 +40,14 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key';
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3001;
 
 // Middleware CORS con múltiples orígenes
 app.use(cors({
   origin: (origin, callback) => {
     // Permitir solicitudes sin origin (como apps móviles o herramientas de testing)
     if (!origin) return callback(null, true);
-
+    
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -141,8 +141,6 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log('Intento de login:', email);
-
     if (!email || !password) {
       return res.status(400).json({ error: 'Faltan credenciales' });
     }
@@ -155,18 +153,14 @@ app.post('/api/auth/login', async (req, res) => {
       .single();
 
     if (error || !user) {
-      console.log('Usuario no encontrado:', email, error);
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
     // Verificar contraseña
     const validPassword = await bcrypt.compare(password, user.password_hash);
     if (!validPassword) {
-      console.log('Contraseña incorrecta para:', email);
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
-
-    console.log('Login exitoso:', email);
 
     // Generar token JWT
     const token = jwt.sign(
@@ -204,7 +198,7 @@ const authenticateToken = (req: any, res: any, next: any) => {
 };
 
 // Rutas de salas de chat
-app.get('/api/chat/rooms', authenticateToken, async (req: AuthRequest, res) => {
+app.get('/api/chat/rooms', authenticateToken, async (req, res) => {
   try {
     const { data: rooms, error } = await supabase
       .from('chat_rooms')
@@ -220,7 +214,7 @@ app.get('/api/chat/rooms', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-app.post('/api/chat/rooms', authenticateToken, async (req: AuthRequest, res) => {
+app.post('/api/chat/rooms', authenticateToken, async (req, res) => {
   try {
     const { name, avatar } = req.body;
 
@@ -247,7 +241,7 @@ app.post('/api/chat/rooms', authenticateToken, async (req: AuthRequest, res) => 
 });
 
 // Rutas de mensajes
-app.get('/api/chat/rooms/:roomId/messages', authenticateToken, async (req: AuthRequest, res) => {
+app.get('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
     const { limit = 50 } = req.query;
@@ -268,7 +262,7 @@ app.get('/api/chat/rooms/:roomId/messages', authenticateToken, async (req: AuthR
   }
 });
 
-app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req: AuthRequest, res) => {
+app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res) => {
   try {
     const { roomId } = req.params;
     const { message } = req.body;
@@ -276,10 +270,6 @@ app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req: Auth
 
     if (!message) {
       return res.status(400).json({ error: 'El mensaje no puede estar vacío' });
-    }
-
-    if (!user) {
-      return res.status(401).json({ error: 'Usuario no autenticado' });
     }
 
     const { data: newMessage, error } = await supabase
@@ -310,16 +300,16 @@ app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req: Auth
 app.get('/api/services', async (req, res) => {
   try {
     const { category } = req.query;
-
+    
     let query = supabase
       .from('services')
       .select('*')
       .order('rating', { ascending: false });
-
+    
     if (category) {
       query = query.eq('category', category);
     }
-
+    
     const { data: services, error } = await query;
 
     if (error) throw error;
@@ -334,7 +324,7 @@ app.get('/api/services', async (req, res) => {
 app.get('/api/services/:id', async (req, res) => {
   try {
     const { id } = req.params;
-
+    
     const { data: service, error } = await supabase
       .from('services')
       .select('*')
@@ -350,14 +340,10 @@ app.get('/api/services/:id', async (req, res) => {
   }
 });
 
-app.post('/api/services', authenticateToken, async (req: AuthRequest, res) => {
+app.post('/api/services', authenticateToken, async (req, res) => {
   try {
     const { name, category, description, phone, email, address, image_url } = req.body;
     const user = req.user;
-
-    if (!user) {
-      return res.status(401).json({ error: 'Usuario no autenticado' });
-    }
 
     if (!name || !category) {
       return res.status(400).json({ error: 'Nombre y categoría son requeridos' });
@@ -391,17 +377,17 @@ app.post('/api/services', authenticateToken, async (req: AuthRequest, res) => {
 app.get('/api/events', async (req, res) => {
   try {
     const { category } = req.query;
-
+    
     let query = supabase
       .from('events')
       .select('*')
       .eq('is_active', true)
       .order('date', { ascending: true });
-
+    
     if (category) {
       query = query.eq('category', category);
     }
-
+    
     const { data: events, error } = await query;
 
     if (error) throw error;
@@ -416,7 +402,7 @@ app.get('/api/events', async (req, res) => {
 app.get('/api/events/:id', async (req, res) => {
   try {
     const { id } = req.params;
-
+    
     const { data: event, error } = await supabase
       .from('events')
       .select('*')
@@ -435,7 +421,7 @@ app.get('/api/events/:id', async (req, res) => {
 app.get('/api/events/:id/attendees', async (req, res) => {
   try {
     const { id } = req.params;
-
+    
     const { data: attendees, error } = await supabase
       .from('event_attendees')
       .select('*')
@@ -450,14 +436,10 @@ app.get('/api/events/:id/attendees', async (req, res) => {
   }
 });
 
-app.post('/api/events', authenticateToken, async (req: AuthRequest, res) => {
+app.post('/api/events', authenticateToken, async (req, res) => {
   try {
     const { title, description, date, location, category, max_attendees, image_url } = req.body;
     const user = req.user;
-
-    if (!user) {
-      return res.status(401).json({ error: 'Usuario no autenticado' });
-    }
 
     if (!title || !date || !category) {
       return res.status(400).json({ error: 'Título, fecha y categoría son requeridos' });
@@ -490,14 +472,10 @@ app.post('/api/events', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-app.post('/api/events/:id/attend', authenticateToken, async (req: AuthRequest, res) => {
+app.post('/api/events/:id/attend', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const user = req.user;
-
-    if (!user) {
-      return res.status(401).json({ error: 'Usuario no autenticado' });
-    }
 
     // Verificar si el evento existe y tiene cupos
     const { data: event, error: eventError } = await supabase
@@ -544,14 +522,10 @@ app.post('/api/events/:id/attend', authenticateToken, async (req: AuthRequest, r
   }
 });
 
-app.delete('/api/events/:id/attend', authenticateToken, async (req: AuthRequest, res) => {
+app.delete('/api/events/:id/attend', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const user = req.user;
-
-    if (!user) {
-      return res.status(401).json({ error: 'Usuario no autenticado' });
-    }
 
     // Verificar si el asistente existe
     const { data: attendee, error: attendeeError } = await supabase
@@ -647,14 +621,28 @@ io.on('connection', (socket) => {
 // Inicializar tablas de Supabase si no existen
 async function initializeDatabase() {
   try {
-    // Verificar conexión con Supabase
-    const { data, error } = await supabase.from('users').select('count').limit(1);
-    if (error) {
-      console.log('Error al conectar con Supabase:', error.message);
-      console.log('Asegúrate de que las tablas estén creadas en Supabase');
-    } else {
-      console.log('Conexión con Supabase establecida correctamente');
+    // Crear tabla de usuarios si no existe
+    const { error: usersError } = await supabase.from('users').select('id').limit(1);
+    if (usersError && usersError.message.includes('does not exist')) {
+      console.log('Creando tabla users...');
+      await supabase.rpc('create_users_table', {});
     }
+
+    // Crear tabla de salas de chat
+    const { error: roomsError } = await supabase.from('chat_rooms').select('id').limit(1);
+    if (roomsError && roomsError.message.includes('does not exist')) {
+      console.log('Creando tabla chat_rooms...');
+      await supabase.rpc('create_chat_rooms_table', {});
+    }
+
+    // Crear tabla de mensajes
+    const { error: messagesError } = await supabase.from('chat_messages').select('id').limit(1);
+    if (messagesError && messagesError.message.includes('does not exist')) {
+      console.log('Creando tabla chat_messages...');
+      await supabase.rpc('create_chat_messages_table', {});
+    }
+
+    console.log('Base de datos inicializada');
   } catch (error) {
     console.log('Error al inicializar base de datos:', error);
   }
@@ -664,17 +652,17 @@ async function initializeDatabase() {
 async function seedChatRooms() {
   try {
     const { data: existingRooms } = await supabase.from('chat_rooms').select('id');
-
+    
     if (!existingRooms || existingRooms.length === 0) {
       console.log('Insertando salas de chat por defecto...');
-
+      
       await supabase.from('chat_rooms').insert([
         { name: 'Junta de Vecinos', avatar: '👥' },
         { name: 'Seguridad UV4', avatar: '🛡️' },
         { name: 'Grupo Jardinería', avatar: '🌱' },
         { name: 'Mercado Comunitario', avatar: '🛒' }
       ]);
-
+      
       console.log('Salas de chat creadas');
     }
   } catch (error) {

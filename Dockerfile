@@ -1,45 +1,31 @@
-FROM node:18-alpine
+# Build stage
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Instalar dependencias del sistema
-RUN apk add --no-cache nginx
-
-# ========== FRONTEND ==========
+# Copy package files
 COPY package*.json ./
+
+# Install dependencies
 RUN npm ci
 
+# Copy source code
 COPY . .
+
+# Build the application
 RUN npm run build
 
-# ========== BACKEND ==========
-WORKDIR /app/server
-COPY server/package*.json ./
-RUN npm install
+# Production stage
+FROM nginx:alpine
 
-COPY server/. .
-RUN npm run build
+# Copy built files from build stage
+COPY --from=build /app/dist /usr/share/nginx/html
 
-WORKDIR /app
-
-# Copiar archivos del frontend a nginx
-RUN mkdir -p /usr/share/nginx/html
-RUN cp -r dist/* /usr/share/nginx/html/
-
-# Crear directorios necesarios para nginx
-RUN mkdir -p /var/log/nginx /run/nginx
-RUN touch /var/log/nginx/error.log /var/log/nginx/access.log
-
-# Configurar nginx
-RUN rm -f /etc/nginx/conf.d/default.conf
+# Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Script de inicio
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
-
-# Exponer puerto
+# Expose port
 EXPOSE 80
 
-# Iniciar
-CMD ["/app/start.sh"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
