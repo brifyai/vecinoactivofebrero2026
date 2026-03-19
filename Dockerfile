@@ -42,6 +42,9 @@ COPY --from=builder /app/server/dist /app/server/dist
 COPY --from=builder /app/server/node_modules /app/server/node_modules
 COPY --from=builder /app/server/package.json /app/server/package.json
 
+# Copy .env file for backend (required for Supabase connection)
+COPY --from=builder /app/server/.env /app/server/.env
+
 # Remove any existing nginx configs and copy new ones
 RUN rm -f /etc/nginx/conf.d/*.conf /etc/nginx/nginx.conf
 COPY nginx-base.conf /etc/nginx/nginx.conf
