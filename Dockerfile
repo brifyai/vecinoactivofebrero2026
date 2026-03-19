@@ -34,7 +34,8 @@ RUN apk add --no-cache nginx curl
 
 WORKDIR /app
 
-# Copy built frontend
+# Copy built frontend to both locations (backend needs it in /app/dist)
+COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy backend (only dist folder)

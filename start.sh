@@ -70,7 +70,7 @@ fi
 
 # Iniciar nginx
 echo "[3/3] Iniciando nginx..."
-nginx -g 'daemon off;' &
+nginx -g 'daemon off;' 2>&1 &
 NGINX_PID=$!
 
 # Esperar a que nginx esté listo
@@ -79,6 +79,15 @@ sleep 2
 # Verificar que nginx esté corriendo
 if ! pgrep -x "nginx" > /dev/null; then
     echo "❌ ERROR: nginx no se inició correctamente"
+    echo ""
+    echo "📋 Verificando configuración de nginx..."
+    nginx -t 2>&1 || true
+    echo ""
+    echo "📋 Últimas líneas de error.log:"
+    tail -20 /var/log/nginx/error.log 2>/dev/null || echo "No hay logs disponibles"
+    echo ""
+    echo "📋 Procesos en ejecución:"
+    ps aux 2>/dev/null | head -10 || echo "No se pueden listar procesos"
     exit 1
 fi
 
