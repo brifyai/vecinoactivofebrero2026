@@ -1,31 +1,36 @@
-# Build stage
-FROM node:20-alpine AS build
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Instalar dependencias del sistema
+RUN apk add --no-cache nginx supervisor
+
+# ========== FRONTEND ==========
 COPY package*.json ./
+RUN npm ci --only=production
 
-# Install dependencies
-RUN npm ci
-
-# Copy source code
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+# ========== BACKEND ==========
+WORKDIR /app/server
+COPY server/package*.json ./
+RUN npm ci --only=production
 
-# Copy built files from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY server/. .
+RUN npm run build
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Expose port
-EXPOSE 80
+# Configurar supervisor para ejecutar ambos procesos
+RUN mkdir -p /etc/supervisor.d
+COPY supervisord.conf /etc/supervisor.d/supervisord.conf
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Configurar nginx
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Exponer puertos
+EXPOSE 80 3002
+
+# Iniciar supervisor (que maneja nginx y el backend)
+CMD ["supervisord", "-c", "/etc/supervisor.d/supervisord.conf"]
