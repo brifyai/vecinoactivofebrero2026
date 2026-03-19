@@ -1,18 +1,10 @@
 import { io, Socket } from 'socket.io-client';
 
-// Detectar si estamos en producción (HTTPS o dominio no-localhost)
-const isProduction = typeof window !== 'undefined' && (
-  window.location.protocol === 'https:' || 
-  !window.location.hostname.includes('localhost')
-);
-
-// En producción: usar URL relativa (mismo dominio)
-// En desarrollo: usar localhost:3008
+// En producción, usar URL relativa para que funcione en el mismo dominio
+// En desarrollo, usar localhost:3008
+const isProduction = import.meta.env.PROD || import.meta.env.MODE === 'production';
 const API_URL = import.meta.env.VITE_API_URL || (isProduction ? '' : 'http://localhost:3008');
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (isProduction ? '' : 'http://localhost:3008');
-
-console.log('[API] Environment:', isProduction ? 'production' : 'development');
-console.log('[API] API_URL:', API_URL || '(relative)');
 
 export interface User {
   id: number;
