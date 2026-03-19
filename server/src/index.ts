@@ -204,7 +204,7 @@ const authenticateToken = (req: any, res: any, next: any) => {
 };
 
 // Rutas de salas de chat
-app.get('/api/chat/rooms', authenticateToken, async (req, res) => {
+app.get('/api/chat/rooms', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { data: rooms, error } = await supabase
       .from('chat_rooms')
@@ -220,7 +220,7 @@ app.get('/api/chat/rooms', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/chat/rooms', authenticateToken, async (req, res) => {
+app.post('/api/chat/rooms', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { name, avatar } = req.body;
 
@@ -247,7 +247,7 @@ app.post('/api/chat/rooms', authenticateToken, async (req, res) => {
 });
 
 // Rutas de mensajes
-app.get('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res) => {
+app.get('/api/chat/rooms/:roomId/messages', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { roomId } = req.params;
     const { limit = 50 } = req.query;
@@ -268,7 +268,7 @@ app.get('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res) 
   }
 });
 
-app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res) => {
+app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { roomId } = req.params;
     const { message } = req.body;
@@ -276,6 +276,10 @@ app.post('/api/chat/rooms/:roomId/messages', authenticateToken, async (req, res)
 
     if (!message) {
       return res.status(400).json({ error: 'El mensaje no puede estar vacío' });
+    }
+
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado' });
     }
 
     const { data: newMessage, error } = await supabase
@@ -346,10 +350,14 @@ app.get('/api/services/:id', async (req, res) => {
   }
 });
 
-app.post('/api/services', authenticateToken, async (req, res) => {
+app.post('/api/services', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { name, category, description, phone, email, address, image_url } = req.body;
     const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
 
     if (!name || !category) {
       return res.status(400).json({ error: 'Nombre y categoría son requeridos' });
@@ -442,10 +450,14 @@ app.get('/api/events/:id/attendees', async (req, res) => {
   }
 });
 
-app.post('/api/events', authenticateToken, async (req, res) => {
+app.post('/api/events', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { title, description, date, location, category, max_attendees, image_url } = req.body;
     const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
 
     if (!title || !date || !category) {
       return res.status(400).json({ error: 'Título, fecha y categoría son requeridos' });
@@ -478,10 +490,14 @@ app.post('/api/events', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/events/:id/attend', authenticateToken, async (req, res) => {
+app.post('/api/events/:id/attend', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
 
     // Verificar si el evento existe y tiene cupos
     const { data: event, error: eventError } = await supabase
@@ -528,10 +544,14 @@ app.post('/api/events/:id/attend', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/events/:id/attend', authenticateToken, async (req, res) => {
+app.delete('/api/events/:id/attend', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no autenticado' });
+    }
 
     // Verificar si el asistente existe
     const { data: attendee, error: attendeeError } = await supabase
