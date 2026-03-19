@@ -129,6 +129,29 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Debug endpoint - información de diagnóstico (sin datos sensibles)
+app.get('/api/debug', (req, res) => {
+  const debugInfo = {
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    port: PORT,
+    staticPath: STATIC_PATH,
+    staticExists: fs.existsSync(STATIC_PATH),
+    indexHtmlExists: fs.existsSync(path.join(STATIC_PATH, 'index.html')),
+    serverDistExists: fs.existsSync(path.join(__dirname, 'index.js')),
+    corsOrigins: allowedOrigins,
+    supabaseUrlConfigured: !!process.env.SUPABASE_URL,
+    supabaseKeyConfigured: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    jwtSecretLength: JWT_SECRET?.length || 0,
+    jwtSecretValid: JWT_SECRET?.length >= 64 && !INVALID_JWT_SECRETS.includes(JWT_SECRET),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    version: process.version,
+    platform: process.platform
+  };
+  res.json(debugInfo);
+});
+
 // Middleware CORS con múltiples orígenes
 // Configuración que permite:
 // - Requests sin Origin (curl, Postman, health checks)
