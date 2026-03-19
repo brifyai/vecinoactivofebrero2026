@@ -1,10 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
-// En producción, usar URL relativa para que funcione en el mismo dominio
-// En desarrollo, usar localhost:3008
-const isProduction = import.meta.env.PROD || import.meta.env.MODE === 'production';
-const API_URL = import.meta.env.VITE_API_URL || (isProduction ? '' : 'http://localhost:3008');
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (isProduction ? '' : 'http://localhost:3008');
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3008';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3008';
 
 export interface User {
   id: number;
