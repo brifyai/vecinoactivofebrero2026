@@ -16,7 +16,8 @@ RUN npm run build
 # ========== BACKEND ==========
 WORKDIR /app/server
 COPY server/package*.json ./
-RUN npm ci --only=production
+# Usar npm install porque no hay package-lock.json en server/
+RUN npm install
 
 COPY server/. .
 RUN npm run build
