@@ -7,7 +7,22 @@ import { createClient } from '@supabase/supabase-js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import fs from 'fs';
 dotenv.config();
+
+// ============================================
+// CONFIGURACIÓN DE PATHS
+// ============================================
+// En producción, el frontend estático está en ../dist (relativo a dist/index.js)
+// En desarrollo, usamos el root del proyecto
+const isProduction = process.env.NODE_ENV === 'production';
+const STATIC_PATH = isProduction 
+  ? path.join(__dirname, '../../dist')  // dist está al mismo nivel que server/
+  : path.join(__dirname, '../../dist'); // Mismo path para desarrollo
+
+console.log('📁 Static path:', STATIC_PATH);
+console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
 
 
 // Validación de variables de entorno requeridas
@@ -150,6 +165,31 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json());
+
+// ============================================
+// SERVIR FRONTEND ESTÁTICO (Node.js puro)
+// ============================================
+// Verificar que existe el directorio dist
+if (fs.existsSync(STATIC_PATH)) {
+  console.log('✅ Frontend estático encontrado en:', STATIC_PATH);
+  
+  // Servir archivos estáticos
+  app.use(express.static(STATIC_PATH, {
+    maxAge: '1y', // Cache de 1 año para assets
+    immutable: true,
+    setHeaders: (res, path) => {
+      // No cachear index.html
+      if (path.endsWith('index.html')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    }
+  }));
+  
+  console.log('✅ Static middleware configurado');
+} else {
+  console.warn('⚠️  Frontend estático NO encontrado en:', STATIC_PATH);
+  console.warn('   Ejecuta "npm run build" en el root para generar el frontend');
+}
 
 // ============================================
 // RATE LIMITING - Segunda capa de protección
@@ -953,9 +993,47 @@ async function seedChatRooms() {
   }
 }
 
-// Iniciar servidor
+// ============================================
+// SPA ROUTING - Todas las rutas no-API van al index.html
+// ============================================
+// Este middleware debe ir DESPUÉS de todas las rutas de API
+// y DESPUÉS del middleware de archivos estáticos
+if (fs.existsSync(STATIC_PATH)) {
+  app.get('*', (req, res) => {
+    // No interceptar rutas de API
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ error: 'API endpoint no encontrado' });
+    }
+    
+    // No interceptar WebSocket
+    if (req.path.startsWith('/socket.io')) {
+      return res.status(404).json({ error: 'WebSocket endpoint no encontrado' });
+    }
+    
+    // Servir index.html para cualquier otra ruta (SPA routing)
+    const indexPath = path.join(STATIC_PATH, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).json({ 
+        error: 'Frontend no encontrado',
+        message: 'Ejecuta "npm run build" para generar el frontend'
+      });
+    }
+  });
+  
+  console.log('✅ SPA routing configurado');
+}
+
+// ============================================
+// INICIAR SERVIDOR
+// ============================================
 httpServer.listen(PORT, () => {
-  console.log(`Servidor corriendo en puerto ${PORT}`);
+  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  console.log(`📡 API disponible en: http://localhost:${PORT}/api`);
+  if (fs.existsSync(STATIC_PATH)) {
+    console.log(`🌐 Frontend disponible en: http://localhost:${PORT}`);
+  }
   initializeDatabase();
   seedChatRooms();
 });

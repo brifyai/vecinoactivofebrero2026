@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:prod": "npm run build && cd server && npm run build",
+    "start:prod": "cd server && NODE_ENV=production PORT=3008 node dist/index.js",
+    "deploy": "chmod +x build-and-start.sh && ./build-and-start.sh"
   },
   "dependencies": {
     "clsx": "2.1.1",
