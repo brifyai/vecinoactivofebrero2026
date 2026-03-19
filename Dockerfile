@@ -24,12 +24,18 @@ RUN npm run build
 
 WORKDIR /app
 
+# Copiar archivos del frontend a nginx
+RUN mkdir -p /usr/share/nginx/html
+RUN cp -r dist/* /usr/share/nginx/html/
+
 # Configurar supervisor para ejecutar ambos procesos
 RUN mkdir -p /etc/supervisor.d
 COPY supervisord.conf /etc/supervisor.d/supervisord.conf
 
 # Configurar nginx
-COPY nginx.conf /etc/nginx/nginx.conf
+RUN mkdir -p /etc/nginx/conf.d
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+RUN rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
 
 # Exponer puertos
 EXPOSE 80 3008
