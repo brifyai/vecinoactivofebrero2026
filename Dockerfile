@@ -32,10 +32,12 @@ RUN cp -r dist/* /usr/share/nginx/html/
 RUN mkdir -p /etc/supervisor.d
 COPY supervisord.conf /etc/supervisor.d/supervisord.conf
 
-# Configurar nginx
-RUN mkdir -p /etc/nginx/conf.d
+# Configurar nginx - eliminar default.conf si existe y copiar nuestra config
+RUN rm -f /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-RUN rm -f /etc/nginx/conf.d/default.conf 2>/dev/null || true
+
+# Verificar que los archivos existen
+RUN ls -la /usr/share/nginx/html/
 
 # Exponer puertos
 EXPOSE 80 3008
