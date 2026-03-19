@@ -29,8 +29,8 @@ RUN npm run build
 # ============================================
 FROM node:20-alpine
 
-# Install Nginx and supervisord
-RUN apk add --no-cache nginx supervisor
+# Install Nginx and curl (for health checks)
+RUN apk add --no-cache nginx curl
 
 WORKDIR /app
 
@@ -47,18 +47,19 @@ RUN rm -f /etc/nginx/conf.d/*.conf /etc/nginx/nginx.conf
 COPY nginx-base.conf /etc/nginx/nginx.conf
 COPY nginx-easypanel.conf /etc/nginx/conf.d/default.conf
 
-# Copy supervisor config
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
 # Create necessary directories with correct permissions
-RUN mkdir -p /var/log/supervisor /var/run /var/log/nginx /var/cache/nginx && \
+RUN mkdir -p /var/log/nginx /var/cache/nginx /run/nginx && \
     chown -R nginx:nginx /var/log/nginx /var/cache/nginx
 
 # Validate nginx configuration
 RUN nginx -t
 
+# Copy start script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Expose port
 EXPOSE 80
 
-# Start supervisor (manages both nginx and node)
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start using the start script
+CMD ["/app/start.sh"]
