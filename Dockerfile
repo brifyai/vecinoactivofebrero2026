@@ -3,11 +3,10 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Instalar dependencias del sistema
-RUN apk add --no-cache nginx supervisor
+RUN apk add --no-cache nginx
 
 # ========== FRONTEND ==========
 COPY package*.json ./
-# Instalar TODAS las dependencias (incluyendo devDependencies para build)
 RUN npm ci
 
 COPY . .
@@ -16,7 +15,6 @@ RUN npm run build
 # ========== BACKEND ==========
 WORKDIR /app/server
 COPY server/package*.json ./
-# Usar npm install porque no hay package-lock.json en server/
 RUN npm install
 
 COPY server/. .
@@ -28,27 +26,20 @@ WORKDIR /app
 RUN mkdir -p /usr/share/nginx/html
 RUN cp -r dist/* /usr/share/nginx/html/
 
-# Copiar script de inicio del backend
-COPY start-backend.sh /app/start-backend.sh
-RUN chmod +x /app/start-backend.sh
-
-# Crear directorios necesarios para nginx y logs
-RUN mkdir -p /var/log/nginx /var/log/supervisor /run/nginx
+# Crear directorios necesarios para nginx
+RUN mkdir -p /var/log/nginx /run/nginx
 RUN touch /var/log/nginx/error.log /var/log/nginx/access.log
 
-# Configurar supervisor para ejecutar ambos procesos
-RUN mkdir -p /etc/supervisor.d
-COPY supervisord.conf /etc/supervisor.d/supervisord.conf
-
-# Configurar nginx - eliminar default.conf si existe y copiar nuestra config
+# Configurar nginx
 RUN rm -f /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Verificar que los archivos existen
-RUN ls -la /usr/share/nginx/html/
+# Script de inicio
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
-# Exponer puertos
-EXPOSE 80 3008
+# Exponer puerto
+EXPOSE 80
 
-# Iniciar supervisor (que maneja nginx y el backend)
-CMD ["supervisord", "-c", "/etc/supervisor.d/supervisord.conf"]
+# Iniciar
+CMD ["/app/start.sh"]
