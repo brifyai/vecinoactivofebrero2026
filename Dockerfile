@@ -12,7 +12,10 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+RUN npm run build && \
+    echo "=== Verificando build del frontend ===" && \
+    ls -la /app/dist/ && \
+    echo "=== Build del frontend completado ==="
 
 # ============================================
 # BUILD BACKEND

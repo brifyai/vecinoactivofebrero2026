@@ -6,6 +6,16 @@ echo "=========================================="
 echo "Iniciando Vecino Activo..."
 echo "=========================================="
 
+# Verificar que el frontend existe
+if [ -d /app/dist ]; then
+    echo "📁 Frontend encontrado en /app/dist"
+    ls -la /app/dist/ | head -10
+else
+    echo "❌ Frontend NO encontrado en /app/dist"
+    echo "Contenido de /app:"
+    ls -la /app/
+fi
+
 # Verificar que el archivo .env existe
 if [ ! -f /app/server/.env ]; then
     echo "❌ ERROR: No se encontró /app/server/.env"
